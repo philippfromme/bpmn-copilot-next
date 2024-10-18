@@ -167,7 +167,7 @@ If the requested changes are not related to the process, reply with an empty JSO
 The current BPMN process is:
 {{bpmnJson}}`;
 
-export class API {
+export default class Copilot {
   constructor() {}
 
   async getAction(prompt) {

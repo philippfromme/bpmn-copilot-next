@@ -5,7 +5,7 @@ import { BpmnImprovedCanvasModule } from '@camunda/improved-canvas';
 
 import fileDrop from 'file-drops';
 
-import ChatbotModule from './chatbot';
+import CopilotModule from './copilot';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
@@ -21,7 +21,7 @@ const container = document.getElementById('container');
 
 const modeler = new Modeler({
   container,
-  additionalModules: [ ChatbotModule, CreateAppendAnythingModule, BpmnImprovedCanvasModule ],
+  additionalModules: [ CopilotModule, CreateAppendAnythingModule, BpmnImprovedCanvasModule ],
   keyboard: {
     bindTo: document,
   },

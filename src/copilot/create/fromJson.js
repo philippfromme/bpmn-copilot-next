@@ -2,7 +2,7 @@ import { isArray } from 'min-dash';
 
 import { layoutProcess } from 'bpmn-auto-layout';
 
-export async function fromJson(json, bpmnjs) {
+export default async function fromJson(json, bpmnjs) {
   const moddle = bpmnjs.get('moddle');
 
   function createElement(type, properties) {

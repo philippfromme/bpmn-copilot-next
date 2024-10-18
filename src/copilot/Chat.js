@@ -21,9 +21,9 @@ import { ChatBot, Close, ArrowRight, UserAvatar } from '@carbon/icons-react';
 
 import classnames from 'classnames';
 
-import { API } from './API';
+import Copilot from './Copilot';
 
-import { fromJson } from './generator';
+import fromJson from './create/fromJson';
 
 const EXAMPLE_PROMPTS = [
   'Create a hiring process',
@@ -40,10 +40,10 @@ export default class Chat {
 
     canvas.getContainer().appendChild(container);
 
-    const api = new API();
+    const copilot = new Copilot();
 
     eventBus.on('diagram.init', () => {
-      render(<App api={ api } bpmnjs={ bpmnjs } />, container);
+      render(<App api={ copilot } bpmnjs={ bpmnjs } />, container);
     });
   }
 }
