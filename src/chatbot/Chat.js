@@ -227,7 +227,7 @@ function App({ api, bpmnjs }) {
         <div className="chatbot djs-scrollable">
           <div className="chatbot-header">
             <Heading>Copilot</Heading>
-            <Button hasIconOnly onClick={ onToggle } kind="ghost" label="Close">
+            <Button hasIconOnly onClick={ onToggle } kind="ghost" label="Close" iconDescription="Close">
               <Close />
             </Button>
           </div>
@@ -258,7 +258,13 @@ function App({ api, bpmnjs }) {
               {
                 hasSelection && (
                   <div className="chatbot-input-controls-left">
-                    <Button className="chatbot-clear-selection" renderIcon={ Close } kind="ghost" onClick={ () => bpmnjs.get('selection').select(null) }>
+                    <Button
+                      className="chatbot-clear-selection"
+                      renderIcon={ Close }
+                      iconDescription="Close"
+                      label="Close"
+                      kind="ghost"
+                      onClick={ () => bpmnjs.get('selection').select(null) }>
                       { selectionLength } elements selected
                     </Button>
                   </div>
@@ -272,6 +278,7 @@ function App({ api, bpmnjs }) {
                   label="Submit"
                   kind="ghost"
                   renderIcon={ ArrowRight }
+                  iconDescription="Submit"
                 >
                 </Button>
               </div>
@@ -279,7 +286,7 @@ function App({ api, bpmnjs }) {
           </div>
         </div>
       ) : (
-        <Button className="chatbot-toggle" hasIconOnly onClick={ onToggle } label="Open">
+        <Button className="chatbot-toggle" hasIconOnly onClick={ onToggle } label="Open" iconDescription="Open">
           <ChatBot />
         </Button>
       )}
