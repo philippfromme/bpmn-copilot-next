@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
+  mode: 'development',
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -52,10 +53,6 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'dist'),
     },
-    compress: true,
-    port: 9000,
-  },
-  experiments: {
-    asyncWebAssembly: true,
-  },
+    port: 9000
+  }
 };

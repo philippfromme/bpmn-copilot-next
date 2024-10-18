@@ -200,9 +200,10 @@ Your response should be a JSON object with the action you decided to take. For e
       response_format: { type: 'json_object' }
     });
 
-    debugger
-
-    return JSON.parse(response);
+    return {
+      bpmnJson: JSON.parse(response),
+      responseText: 'I have created the BPMN process.'
+    };
   }
 
   async updateBpmn(prompt, bpmnJson) {
@@ -216,7 +217,10 @@ Your response should be a JSON object with the action you decided to take. For e
       response_format: { type: 'json_object' }
     });
 
-    return JSON.parse(response);
+    return {
+      bpmnJson: JSON.parse(response),
+      responseText: 'I have updated the BPMN process.'
+    };
   }
 
   async respondText(prompt) {
