@@ -8,9 +8,9 @@ import React, {
 
 import { render } from 'react-dom';
 
-import { Button, Heading, InlineLoading, TextInput } from '@carbon/react';
+import { Button, Heading, InlineLoading, Tag, TextArea } from '@carbon/react';
 
-import { ChatBot, Close, ArrowUp, UserAvatar } from '@carbon/icons-react';
+import { ChatBot, Close, ArrowRight, UserAvatar } from '@carbon/icons-react';
 
 import classnames from 'classnames';
 
@@ -19,7 +19,7 @@ import { API } from './API';
 import { fromJson } from './generator';
 
 export default class Chat {
-  constructor(bpmnjs, canvas) {
+  constructor(bpmnjs, canvas, eventBus) {
     const container = document.createElement('div');
 
     container.id = 'chatbot-container';
@@ -28,11 +28,13 @@ export default class Chat {
 
     const api = new API();
 
-    render(<App api={ api } bpmnjs={ bpmnjs } />, container);
+    eventBus.on('diagram.init', () => {
+      render(<App api={ api } bpmnjs={ bpmnjs } />, container);
+    });
   }
 }
 
-Chat.$inject = [ 'bpmnjs', 'canvas' ];
+Chat.$inject = [ 'bpmnjs', 'canvas', 'eventBus' ];
 
 function App({ api, bpmnjs }) {
   const [ messages, addMessage ] = useReducer(
@@ -50,6 +52,13 @@ function App({ api, bpmnjs }) {
   const [ open, setOpen ] = useState(true);
   const [ prompting, setPrompting ] = useState(false);
   const [ value, setValue ] = useState('');
+  const [ hasSelection, setHasSelection ] = useState(false);
+  const [ selectionLength, setSelectionLength ] = useState(0);
+
+  bpmnjs.on('selection.changed', ({ newSelection }) => {
+    setHasSelection(newSelection.length > 0);
+    setSelectionLength(newSelection.length);
+  });
 
   const submitPrompt = useCallback(async () => {
     const prompt = value.trim();
@@ -174,7 +183,13 @@ function App({ api, bpmnjs }) {
   );
 
   const onKeyDown = useCallback(
-    ({ code }) => {
+    ({ code, ctrlKey }) => {
+      if (code === 'Enter' && ctrlKey && value.length && !prompting) {
+        setValue((value) => `${value}\n`);
+
+        return;
+      }
+
       if (code === 'Enter' && value.length && !prompting) {
         submitPrompt();
       }
@@ -183,6 +198,10 @@ function App({ api, bpmnjs }) {
   );
 
   const onSubmit = useCallback(() => {
+    if (!value.trim().length || prompting) {
+      return;
+    }
+
     if (value.length && !prompting) {
       submitPrompt();
     }
@@ -193,6 +212,14 @@ function App({ api, bpmnjs }) {
   useEffect(() => {
     ref.current.scrollTop = ref.current.scrollHeight;
   }, [ messages ]);
+
+  const inputRef = useRef();
+
+  useEffect(() => {
+    setTimeout(() => {
+      inputRef.current.focus();
+    }, 0);
+  }, []);
 
   return (
     <>
@@ -217,23 +244,38 @@ function App({ api, bpmnjs }) {
             )}
           </div>
           <div className="chatbot-input">
-            <TextInput
+            <TextArea
+              rows={ Math.min(3, (Math.max(1, countLineBreaks(value)))) }
+              ref={ inputRef }
               id="chatbot-input"
-              labelText="Describe the process..."
+              labelText=""
               hideLabel={ true }
-              placeholder="Describe the process..."
               onInput={ onInput }
               onKeyDown={ onKeyDown }
               value={ value }
             />
-            <Button
-              hasIconOnly
-              disabled={ prompting || !value.length }
-              onClick={ onSubmit }
-              label="Submit"
-            >
-              <ArrowUp />
-            </Button>
+            <div className="chatbot-input-controls">
+              {
+                hasSelection && (
+                  <div className="chatbot-input-controls-left">
+                    <Button className="chatbot-clear-selection" renderIcon={ Close } kind="ghost" onClick={ () => bpmnjs.get('selection').select(null) }>
+                      { selectionLength } elements selected
+                    </Button>
+                  </div>
+                )
+              }
+              <div className="chatbot-input-controls-right">
+                <Button
+                  className="chatbot-submit"
+                  hasIconOnly
+                  onClick={ onSubmit }
+                  label="Submit"
+                  kind="ghost"
+                  renderIcon={ ArrowRight }
+                >
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -261,4 +303,8 @@ function Message(props) {
       <div className="chatbot-message-bubble">{children}</div>
     </div>
   );
+}
+
+function countLineBreaks(str) {
+  return (str.match(/\n/g) || []).length;
 }

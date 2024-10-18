@@ -136,14 +136,45 @@ body {
 
     .chatbot-input {
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       background-color: colors.$white;
+      padding: 2px;
 
-      input {
-        height: 36px;
-        line-height: 36px;
+      textarea {
+        resize: none;
         border-bottom: none !important;
+        background-color: transparent;
         font-size: 14px;
+        outline: none;
+      }
+
+      &:has(textarea:focus) {
+        outline: 2px solid colors.$blue-60;
+        outline-offset: -2px;
+      }
+
+      .chatbot-input-controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        padding: 2px;
+
+        .chatbot-input-controls-left {
+          flex-grow: 1;
+        }
+
+        button {
+          font-size: 14px;
+          height: 36px;
+          border-radius: 4px;
+          color: var(--cds-icon-primary);
+        }
+
+        svg {
+          block-size: auto;
+          inline-size: auto;
+          margin-block-start: 2px;
+        }
       }
     }
   }
