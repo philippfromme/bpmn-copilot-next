@@ -4,6 +4,8 @@ Mustache.escape = text => text;
 
 import OpenAI from 'openai';
 
+import fromJson from './util/fromJson';
+
 const openAIApiKey = process.env.OPENAI_API_KEY;
 
 const openai = new OpenAI({
@@ -168,9 +170,99 @@ The current BPMN process is:
 {{bpmnJson}}`;
 
 export default class Copilot {
-  constructor() {}
+  constructor(bpmnjs) {
+    this._bpmnjs = bpmnjs;
+  }
 
-  async getAction(prompt) {
+  async submitPrompt(prompt) {
+    let action;
+
+    /**
+     * 1. Decide what action to take based on the user prompt.
+     */
+    try {
+      const response = await this._getAction(prompt);
+
+      ({ action } = response);
+    } catch (error) {
+      console.log('error', error);
+
+      return `Error: ${error.message}`;
+    }
+
+    if (!action) {
+      return 'I could not understand your request. Please try again.';
+    }
+
+    /**
+     * 2. Perform the action.
+     */
+    if (action === 'createBpmn') {
+
+      /**
+       * 2.1. Create a new BPMN process.
+       */
+      try {
+        const {
+          bpmnJson,
+          responseText
+        } = await this._createBpmn(prompt);
+
+        const xml = await fromJson(bpmnJson, this._bpmnjs);
+
+        console.log('xml after layout', xml);
+
+        await this._bpmnjs.importXML(xml);
+
+        console.log('imported', this._bpmnjs.get('elementRegistry')._elements);
+
+        this._bpmnjs.get('canvas').zoom('fit-viewport');
+
+        return responseText;
+      } catch (error) {
+        console.log('error', error);
+
+        return `Error: ${error.message}`;
+      }
+    } else if (action === 'updateBpmn') {
+
+      /**
+       * 2.2. Update an existing BPMN process.
+       */
+      try {
+        const {
+          bpmnJson,
+          responseText
+        } = await this._updateBpmn(prompt);
+
+        const xml = await fromJson(bpmnJson, this._bpmnjs);
+
+        console.log('xml after layout', xml);
+
+        await this._bpmnjs.importXML(xml);
+
+        console.log('imported', this._bpmnjs.get('elementRegistry')._elements);
+
+        this._bpmnjs.get('canvas').zoom('fit-viewport');
+
+        return responseText;
+      } catch (error) {
+        console.log('error', error);
+
+        return `Error: ${error.message}`;
+      }
+    } else if (action === 'respondText') {
+
+      /**
+       * 2.3. Respond to a general question.
+       */
+      const responseText = await this._respondText(prompt);
+
+      return responseText;
+    }
+  }
+
+  async _getAction(prompt) {
     const response = await this._getCompletion({
       systemPrompt: `You are a BPMN expert that helps users create and update BPMN processes. You receive a prompt from the user and decide what action to take.
 Possible actions are:
@@ -190,7 +282,7 @@ Your response should be a JSON object with the action you decided to take. For e
     return JSON.parse(response);
   }
 
-  async createBpmn(prompt) {
+  async _createBpmn(prompt) {
     const response = await this._getCompletion({
       systemPrompt: Mustache.render(createProcessSystemPrompt, {
         baseInstructions,
@@ -206,7 +298,7 @@ Your response should be a JSON object with the action you decided to take. For e
     };
   }
 
-  async updateBpmn(prompt, bpmnJson) {
+  async _updateBpmn(prompt, bpmnJson) {
     const response = await this._getCompletion({
       systemPrompt: Mustache.render(updateProcessSystemPrompt, {
         baseInstructions,
@@ -223,7 +315,7 @@ Your response should be a JSON object with the action you decided to take. For e
     };
   }
 
-  async respondText(prompt) {
+  async _respondText(prompt) {
     const response = await this._getCompletion({
       systemPrompt: `You are a BPMN expert that helps users with questions related to BPMN processes. Your response is
 going to be shown directly to the user. Make sure to provide a helpful response. If you cannot provide a helpful

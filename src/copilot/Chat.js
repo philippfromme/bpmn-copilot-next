@@ -23,8 +23,6 @@ import classnames from 'classnames';
 
 import Copilot from './Copilot';
 
-import fromJson from './create/fromJson';
-
 const EXAMPLE_PROMPTS = [
   'Create a hiring process',
   'Include a background check in the hiring process',
@@ -40,17 +38,17 @@ export default class Chat {
 
     canvas.getContainer().appendChild(container);
 
-    const copilot = new Copilot();
+    const copilot = new Copilot(bpmnjs);
 
     eventBus.on('diagram.init', () => {
-      render(<App api={ copilot } bpmnjs={ bpmnjs } />, container);
+      render(<App copilot={ copilot } bpmnjs={ bpmnjs } />, container);
     });
   }
 }
 
 Chat.$inject = [ 'bpmnjs', 'canvas', 'eventBus' ];
 
-function App({ api, bpmnjs }) {
+function App({ copilot, bpmnjs }) {
   const [ messages, addMessage ] = useReducer(
     (state, message) => {
       return [ ...state, message ];
@@ -89,105 +87,9 @@ function App({ api, bpmnjs }) {
     isPromptingRef.current = true;
     setIsPrompting(true);
 
-    let action;
+    const response = await copilot.submitPrompt(prompt);
 
-    /**
-     * 1. Decide what action to take based on the user prompt.
-     */
-    try {
-      const response = await api.getAction(prompt);
-
-      ({ action } = response);
-    } catch (error) {
-      console.log('error', error);
-
-      addMessage({ type: 'ai', text: `Error: ${error.message}` });
-    }
-
-    if (!action) {
-      addMessage({ type: 'ai', text: 'I could not understand your request. Please try again.' });
-
-      isPromptingRef.current = false;
-      setIsPrompting(false);
-
-      return;
-    }
-
-    /**
-     * 2. Perform the action.
-     */
-    if (action === 'createBpmn') {
-
-      /**
-       * 2.1. Create a new BPMN process.
-       */
-      try {
-        const {
-          bpmnJson,
-          responseText
-        } = await api.createBpmn(prompt);
-
-        addMessage({
-          type: 'ai',
-          text: responseText
-        });
-
-        const xml = await fromJson(bpmnJson, bpmnjs);
-
-        console.log('xml after layout', xml);
-
-        await bpmnjs.importXML(xml);
-
-        console.log('imported', bpmnjs.get('elementRegistry')._elements);
-
-        bpmnjs.get('canvas').zoom('fit-viewport');
-      } catch (error) {
-        console.log('error', error);
-
-        addMessage({ type: 'ai', text: `Error: ${error.message}` });
-      }
-    } else if (action === 'updateBpmn') {
-
-      /**
-       * 2.2. Update an existing BPMN process.
-       */
-      try {
-        const {
-          bpmnJson,
-          responseText
-        } = await api.updateBpmn(prompt);
-
-        addMessage({
-          type: 'ai',
-          text: responseText
-        });
-
-        const xml = await fromJson(bpmnJson, bpmnjs);
-
-        console.log('xml after layout', xml);
-
-        await bpmnjs.importXML(xml);
-
-        console.log('imported', bpmnjs.get('elementRegistry')._elements);
-
-        bpmnjs.get('canvas').zoom('fit-viewport');
-      } catch (error) {
-        console.log('error', error);
-
-        addMessage({ type: 'ai', text: `Error: ${error.message}` });
-      }
-    } else if (action === 'respondText') {
-
-      /**
-       * 2.3. Respond to a general question.
-       */
-      const responseText = await api.respondText(prompt);
-
-      addMessage({
-        type: 'ai',
-        text: responseText
-      });
-    }
+    addMessage({ type: 'ai', text: response });
 
     isPromptingRef.current = false;
     setIsPrompting(false);
