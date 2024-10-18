@@ -200,6 +200,8 @@ Your response should be a JSON object with the action you decided to take. For e
       response_format: { type: 'json_object' }
     });
 
+    debugger
+
     return JSON.parse(response);
   }
 

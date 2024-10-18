@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useReducer,
   useRef,
   useState,
@@ -8,7 +9,13 @@ import React, {
 
 import { render } from 'react-dom';
 
-import { Button, Heading, InlineLoading, Tag, TextArea } from '@carbon/react';
+import {
+  Button,
+  Heading,
+  InlineLoading,
+  TextArea,
+  Tile
+} from '@carbon/react';
 
 import { ChatBot, Close, ArrowRight, UserAvatar } from '@carbon/icons-react';
 
@@ -17,6 +24,13 @@ import classnames from 'classnames';
 import { API } from './API';
 
 import { fromJson } from './generator';
+
+const EXAMPLE_PROMPTS = [
+  'Create a hiring process',
+  'Include a background check in the hiring process',
+  'Explain what a subprocess is',
+  'How do I buy bitcoins?'
+];
 
 export default class Chat {
   constructor(bpmnjs, canvas, eventBus) {
@@ -49,25 +63,31 @@ function App({ api, bpmnjs }) {
     ]
   );
 
+  const isPromptingRef = useRef(false);
+
   const [ open, setOpen ] = useState(true);
-  const [ prompting, setPrompting ] = useState(false);
   const [ value, setValue ] = useState('');
+  const [ isPrompting, setIsPrompting ] = useState(false);
   const [ hasSelection, setHasSelection ] = useState(false);
   const [ selectionLength, setSelectionLength ] = useState(0);
+  const [ examplePromptsVisible, setExamplePromptsVisible ] = useState(true);
 
   bpmnjs.on('selection.changed', ({ newSelection }) => {
     setHasSelection(newSelection.length > 0);
     setSelectionLength(newSelection.length);
   });
 
-  const submitPrompt = useCallback(async () => {
-    const prompt = value.trim();
+  const submitPrompt = useCallback(async (_value) => {
+    const prompt = _value || value.trim();
 
     addMessage({ type: 'human', text: prompt });
 
+    setExamplePromptsVisible(false);
+
     setValue('');
 
-    setPrompting(true);
+    isPromptingRef.current = true;
+    setIsPrompting(true);
 
     let action;
 
@@ -87,7 +107,8 @@ function App({ api, bpmnjs }) {
     if (!action) {
       addMessage({ type: 'ai', text: 'I could not understand your request. Please try again.' });
 
-      setPrompting(false);
+      isPromptingRef.current = false;
+      setIsPrompting(false);
 
       return;
     }
@@ -168,7 +189,8 @@ function App({ api, bpmnjs }) {
       });
     }
 
-    setPrompting(false);
+    isPromptingRef.current = false;
+    setIsPrompting(false);
   }, [ addMessage, value ]);
 
   const onToggle = useCallback(() => {
@@ -177,6 +199,10 @@ function App({ api, bpmnjs }) {
 
   const onInput = useCallback(
     ({ target }) => {
+      if (isPromptingRef.current) {
+        return;
+      }
+
       setValue(target.value);
     },
     [ setValue ]
@@ -184,28 +210,28 @@ function App({ api, bpmnjs }) {
 
   const onKeyDown = useCallback(
     ({ code, ctrlKey }) => {
-      if (code === 'Enter' && ctrlKey && value.length && !prompting) {
+      if (code === 'Enter' && ctrlKey && value.length && !isPromptingRef.current) {
         setValue((value) => `${value}\n`);
 
         return;
       }
 
-      if (code === 'Enter' && value.length && !prompting) {
+      if (code === 'Enter' && value.length && !isPromptingRef.current) {
         submitPrompt();
       }
     },
-    [ prompting, submitPrompt, value ]
+    [ submitPrompt, value ]
   );
 
   const onSubmit = useCallback(() => {
-    if (!value.trim().length || prompting) {
+    if (!value.trim().length || isPromptingRef.current) {
       return;
     }
 
-    if (value.length && !prompting) {
+    if (value.length && !isPromptingRef.current) {
       submitPrompt();
     }
-  }, [ prompting, submitPrompt, value ]);
+  }, [ submitPrompt, value ]);
 
   const ref = useRef();
 
@@ -220,6 +246,15 @@ function App({ api, bpmnjs }) {
       inputRef.current.focus();
     }, 0);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!inputRef.current) {
+      return;
+    }
+
+    inputRef.current.style.height = 'auto';
+    inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
+  }, [ value ]);
 
   return (
     <>
@@ -237,15 +272,48 @@ function App({ api, bpmnjs }) {
                 {message.text}
               </Message>
             ))}
-            {prompting && (
+            {isPrompting && (
               <Message type="ai">
                 <InlineLoading />
               </Message>
             )}
           </div>
+          {
+            messages.length === 1 && examplePromptsVisible && (
+              <div className="chatbot-examples">
+                <div className="chatbot-examples-header">
+                  <h2>Examples</h2>
+                  <Button
+                    onClick={ () => setExamplePromptsVisible(false) }
+                    kind="ghost"
+                    hasIconOnly
+                    renderIcon={ Close }
+                    iconDescription="Close"
+                    label="Close"
+                    className="chatbot-close-examples"
+                  ></Button>
+                </div>
+                {
+                  EXAMPLE_PROMPTS.map((prompt, index) => {
+                    return (
+                      <Tile
+                        key={ index }
+                        className="chatbot-example"
+                        onClick={ () => submitPrompt(prompt) }
+                      >
+                        { prompt }
+                        <ArrowRight />
+                      </Tile>
+                    );
+                  })
+                }
+              </div>
+            )
+          }
           <div className="chatbot-input">
             <TextArea
-              rows={ Math.min(3, (Math.max(1, countLineBreaks(value)))) }
+              placeholder="Ask Copilot"
+              rows={ 1 }
               ref={ inputRef }
               id="chatbot-input"
               labelText=""
@@ -310,8 +378,4 @@ function Message(props) {
       <div className="chatbot-message-bubble">{children}</div>
     </div>
   );
-}
-
-function countLineBreaks(str) {
-  return (str.match(/\n/g) || []).length;
 }
