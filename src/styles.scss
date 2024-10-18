@@ -236,3 +236,24 @@ body {
   }
 }
 
+#undo-redo {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: colors.$white;
+  box-shadow: var(--context-pad-box-shadow);
+
+  button:first-child {
+    margin-right: 1px;
+  }
+
+  .cds--icon-tooltip--disabled .cds--tooltip-trigger__wrapper {
+    cursor: default;
+  }
+
+  .cds--popover {
+    display: none !important;
+  }
+}

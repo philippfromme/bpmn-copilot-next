@@ -41,14 +41,14 @@ export default class Chat {
     const copilot = new Copilot(bpmnjs);
 
     eventBus.on('diagram.init', () => {
-      render(<App copilot={ copilot } bpmnjs={ bpmnjs } />, container);
+      render(<ChatComponent copilot={ copilot } bpmnjs={ bpmnjs } />, container);
     });
   }
 }
 
 Chat.$inject = [ 'bpmnjs', 'canvas', 'eventBus' ];
 
-function App({ copilot, bpmnjs }) {
+function ChatComponent({ copilot, bpmnjs }) {
   const [ messages, addMessage ] = useReducer(
     (state, message) => {
       return [ ...state, message ];
