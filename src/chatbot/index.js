@@ -1,6 +1,6 @@
-import Chatbot from './Chatbot';
+import Chat from './Chat';
 
 export default {
-  __init__: [ 'chatbot' ],
-  chatbot: [ 'type', Chatbot ]
+  __init__: [ 'chat' ],
+  chat: [ 'type', Chat ]
 };

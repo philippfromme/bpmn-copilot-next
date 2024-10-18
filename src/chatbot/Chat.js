@@ -10,15 +10,15 @@ import { render } from 'react-dom';
 
 import { Button, Heading, InlineLoading, TextInput } from '@carbon/react';
 
-import { ChatBot, Close, SendAlt, UserAvatar } from '@carbon/icons-react';
+import { ChatBot, Close, ArrowUp, UserAvatar } from '@carbon/icons-react';
 
 import classnames from 'classnames';
 
-import { BpmnGPT } from './BpmnGPT';
+import { API } from './API';
 
 import { fromJson } from './generator';
 
-export default class ChatbotUi {
+export default class Chat {
   constructor(bpmnjs, canvas) {
     const container = document.createElement('div');
 
@@ -26,15 +26,15 @@ export default class ChatbotUi {
 
     canvas.getContainer().appendChild(container);
 
-    const bpmnGPT = new BpmnGPT();
+    const api = new API();
 
-    render(<App bpmnGPT={ bpmnGPT } bpmnjs={ bpmnjs } />, container);
+    render(<App api={ api } bpmnjs={ bpmnjs } />, container);
   }
 }
 
-ChatbotUi.$inject = [ 'bpmnjs', 'canvas' ];
+Chat.$inject = [ 'bpmnjs', 'canvas' ];
 
-function App({ bpmnGPT, bpmnjs }) {
+function App({ api, bpmnjs }) {
   const [ messages, addMessage ] = useReducer(
     (state, message) => {
       return [ ...state, message ];
@@ -42,7 +42,7 @@ function App({ bpmnGPT, bpmnjs }) {
     [
       {
         type: 'ai',
-        text: "Let's start by describing the process you want to create.",
+        text: "Hi, I'm your BPMN copilot. How can I help you?"
       },
     ]
   );
@@ -50,7 +50,6 @@ function App({ bpmnGPT, bpmnjs }) {
   const [ open, setOpen ] = useState(true);
   const [ prompting, setPrompting ] = useState(false);
   const [ value, setValue ] = useState('');
-  const [ lastResponse, setLastResponse ] = useState(null);
 
   const submitPrompt = useCallback(async () => {
     const prompt = value.trim();
@@ -61,51 +60,107 @@ function App({ bpmnGPT, bpmnjs }) {
 
     setPrompting(true);
 
+    let action;
+
+    /**
+     * 1. Decide what action to take based on the user prompt.
+     */
     try {
-      let response;
+      const response = await api.getAction(prompt);
 
-      if (lastResponse) {
-
-        // update
-        response = await bpmnGPT.updateBpmn(prompt, lastResponse);
-      } else {
-
-        // create
-        response = await bpmnGPT.createBpmn(prompt);
-      }
-
-      console.log('respone', response);
-
-      setLastResponse(response);
-
-      const json = response;
-
-      console.log('json', json);
-
-      addMessage({
-        type: 'ai',
-        text: lastResponse
-          ? 'I updated the process according to the changes you requested.'
-          : 'I created the process according to your description.',
-      });
-
-      const xml = await fromJson(json, bpmnjs);
-
-      console.log('xml after layout', xml);
-
-      await bpmnjs.importXML(xml);
-
-      console.log('imported', bpmnjs.get('elementRegistry')._elements);
-
-      bpmnjs.get('canvas').zoom('fit-viewport');
+      ({ action } = response);
     } catch (error) {
       console.log('error', error);
 
       addMessage({ type: 'ai', text: `Error: ${error.message}` });
-    } finally {
-      setPrompting(false);
     }
-  }, [ addMessage, lastResponse, value ]);
+
+    if (!action) {
+      addMessage({ type: 'ai', text: 'I could not understand your request. Please try again.' });
+
+      setPrompting(false);
+
+      return;
+    }
+
+    /**
+     * 2. Perform the action.
+     */
+    if (action === 'createBpmn') {
+
+      /**
+       * 2.1. Create a new BPMN process.
+       */
+      try {
+        const {
+          bpmnJson,
+          responseText
+        } = await api.createBpmn(prompt);
+
+        addMessage({
+          type: 'ai',
+          text: responseText
+        });
+
+        const xml = await fromJson(bpmnJson, bpmnjs);
+
+        console.log('xml after layout', xml);
+
+        await bpmnjs.importXML(xml);
+
+        console.log('imported', bpmnjs.get('elementRegistry')._elements);
+
+        bpmnjs.get('canvas').zoom('fit-viewport');
+      } catch (error) {
+        console.log('error', error);
+
+        addMessage({ type: 'ai', text: `Error: ${error.message}` });
+      }
+    } else if (action === 'updateBpmn') {
+
+      /**
+       * 2.2. Update an existing BPMN process.
+       */
+      try {
+        const {
+          bpmnJson,
+          responseText
+        } = await api.updateBpmn(prompt);
+
+        addMessage({
+          type: 'ai',
+          text: responseText
+        });
+
+        const xml = await fromJson(bpmnJson, bpmnjs);
+
+        console.log('xml after layout', xml);
+
+        await bpmnjs.importXML(xml);
+
+        console.log('imported', bpmnjs.get('elementRegistry')._elements);
+
+        bpmnjs.get('canvas').zoom('fit-viewport');
+      } catch (error) {
+        console.log('error', error);
+
+        addMessage({ type: 'ai', text: `Error: ${error.message}` });
+      }
+    } else if (action === 'respondText') {
+
+      /**
+       * 2.3. Respond to a general question.
+       */
+      const responseText = await api.respondText(prompt);
+
+      addMessage({
+        type: 'ai',
+        text: responseText
+      });
+    }
+
+    setPrompting(false);
+  }, [ addMessage, value ]);
 
   const onToggle = useCallback(() => {
     setOpen(!open);
@@ -140,11 +195,11 @@ function App({ bpmnGPT, bpmnjs }) {
   }, [ messages ]);
 
   return (
-    <div>
+    <>
       {open ? (
         <div className="chatbot djs-scrollable">
           <div className="chatbot-header">
-            <Heading>BpmnGPT</Heading>
+            <Heading>Copilot</Heading>
             <Button hasIconOnly onClick={ onToggle } kind="ghost" label="Close">
               <Close />
             </Button>
@@ -177,16 +232,16 @@ function App({ bpmnGPT, bpmnjs }) {
               onClick={ onSubmit }
               label="Submit"
             >
-              <SendAlt />
+              <ArrowUp />
             </Button>
           </div>
         </div>
       ) : (
-        <Button hasIconOnly onClick={ onToggle } label="Open">
+        <Button className="chatbot-toggle" hasIconOnly onClick={ onToggle } label="Open">
           <ChatBot />
         </Button>
       )}
-    </div>
+    </>
   );
 }
 
@@ -206,12 +261,4 @@ function Message(props) {
       <div className="chatbot-message-bubble">{children}</div>
     </div>
   );
-}
-
-async function dummyPrompt(prompt, delay = 1000) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(dummyResponse);
-    }, delay);
-  });
 }

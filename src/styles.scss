@@ -2,7 +2,6 @@
 @use "@carbon/react/scss/themes";
 @use "@carbon/react/scss/theme";
 @use '@carbon/colors';
-@use '@carbon/styles/scss/utilities/box-shadow';
 
 :root {
 	@include theme.theme(themes.$g10);
@@ -16,7 +15,7 @@ body {
   margin: 0;
   overflow: hidden;
   padding: 0;
-  background-color: $white;
+  background-color: colors.$white;
 }
 
 body {
@@ -26,6 +25,12 @@ body {
 .bjs-powered-by {
   right: initial !important;
   left: 15px !important;
+}
+
+.djs-palette {
+  box-shadow: var(--context-pad-box-shadow);
+  border: none;
+  border-radius: 4px;
 }
 
 #container {
@@ -42,19 +47,25 @@ body {
     display: none !important;
   }
 
+  .chatbot-toggle {
+    border-radius: 4px;
+  }
+
   .chatbot {
     display: flex;
     flex-direction: column;
-    width: 320px;
-    height: 480px;
-    @include box-shadow;
+    width: 400px;
+    height: 500px;
+    box-shadow: var(--context-pad-box-shadow);
+    border-radius: 4px;
+    overflow: hidden;
 
     .chatbot-header {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      background-color: $white;
+      background-color: colors.$white;
       
       h1 {
         margin-left: 0.9375rem;
@@ -65,9 +76,9 @@ body {
 
     .chatbot-messages {
       flex-grow: 1;
-      background-color: $gray-10;
-      border-top: 1px solid $gray-20;
-      border-bottom: 1px solid $gray-20;
+      background-color: colors.$gray-10;
+      border-top: 1px solid colors.$gray-20;
+      border-bottom: 1px solid colors.$gray-20;
       overflow-y: auto;
 
       .chatbot-message {
@@ -78,8 +89,8 @@ body {
 
         &.chatbot-message-ai {
           .chatbot-message-bubble {
-            background-color: $white;
-            border: 1px solid $gray-20;
+            background-color: colors.$white;
+            border: 1px solid colors.$gray-20;
 
             .cds--inline-loading {
               height: 14px;
@@ -100,9 +111,9 @@ body {
           flex-direction: row-reverse;
 
           .chatbot-message-bubble {
-            background-color: $blue-60;
-            border: 1px solid $white;
-            color: $white;
+            background-color: colors.$blue-60;
+            border: 1px solid colors.$white;
+            color: colors.$white;
           }
 
           .chatbot-message-avatar {
@@ -117,7 +128,7 @@ body {
         .chatbot-message-bubble {
           padding: 0.9375rem;
           border-radius: 0.9375rem;
-          background-color: gray;
+          background-color: colors.$gray-10;
           font-size: 14px;
         }
       }
@@ -126,7 +137,7 @@ body {
     .chatbot-input {
       display: flex;
       flex-direction: row;
-      background-color: $white;
+      background-color: colors.$white;
 
       input {
         height: 36px;

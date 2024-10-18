@@ -163,60 +163,74 @@ const updateProcessSystemPrompt = `You are a BPMN expert that updates a BPMN pro
 All BPMN processes you create must be valid, e.g., all elements must be connected.
 If the requested changes are not related to the process, reply with an empty JSON object.
 {{baseInstructions}}
-{{formatInstructions}}`;
+{{formatInstructions}}
+The current BPMN process is:
+{{bpmnJson}}`;
 
-export class BpmnGPT {
+export class API {
   constructor() {}
 
-  async createBpmn(description) {
-    const start = Date.now();
+  async getAction(prompt) {
+    const response = await this._getCompletion({
+      systemPrompt: `You are a BPMN expert that helps users create and update BPMN processes. You receive a prompt from the user and decide what action to take.
+Possible actions are:
+- \`createBpmn\` if the user wants to create a BPMN process
+- \`updatedBpmn\` if the user wants to update a BPMN process
+- \`respondText\` if the prompt is not related to creating or updating a BPMN process and should be responded to with text
 
+Your response should be a JSON object with the action you decided to take. For example:
+\`\`\`
+{ "action": "createBpmn" }
+\`\`\``,
+      userPrompt: prompt,
+      model: 'gpt-4o-mini',
+      response_format: { type: 'json_object' }
+    });
+
+    return JSON.parse(response);
+  }
+
+  async createBpmn(prompt) {
     const response = await this._getCompletion({
       systemPrompt: Mustache.render(createProcessSystemPrompt, {
         baseInstructions,
         formatInstructions
       }),
-      userPrompt: description
+      userPrompt: prompt,
+      response_format: { type: 'json_object' }
     });
 
-    const end = Date.now();
-
-    console.log('Time elapsed:', (end - start) / 1000, 'seconds');
-
-    console.log(response);
-
-    return response;
+    return JSON.parse(response);
   }
 
-  async updateBpmn(requestedChanges, process) {
-    const start = Date.now();
-
+  async updateBpmn(prompt, bpmnJson) {
     const response = await this._getCompletion({
       systemPrompt: Mustache.render(updateProcessSystemPrompt, {
         baseInstructions,
-        formatInstructions
+        formatInstructions,
+        bpmnJson: JSON.stringify(bpmnJson)
       }),
-      userPrompt: Mustache.render(`Process: {{process}}
-Requested changes: {{requestedChanges}}`, {
-        process,
-        requestedChanges
-      })
+      userPrompt: prompt,
+      response_format: { type: 'json_object' }
     });
 
-    const end = Date.now();
+    return JSON.parse(response);
+  }
 
-    console.log('Time elapsed:', (end - start) / 1000, 'seconds');
-
-    console.log(response);
+  async respondText(prompt) {
+    const response = await this._getCompletion({
+      systemPrompt: `You are a BPMN expert that helps users with questions related to BPMN processes. Your response is
+going to be shown directly to the user. Make sure to provide a helpful response. If you cannot provide a helpful
+response or the prompt is not related to BPMN processes, reply in a way that indicates that. For example: "I'm sorry, I
+cannot provide a helpful response to this question."`,
+      userPrompt: prompt
+    });
 
     return response;
   }
 
-  async _getCompletion({ systemPrompt, userPrompt }) {
-    console.log('systemPrompt', systemPrompt);
-    console.log('userPrompt', userPrompt);
-
-    const chatCompletion = await openai.chat.completions.create({
+  async _getCompletion({ systemPrompt, userPrompt, model = 'gpt-4o', ...options }) {
+    const request = {
       messages: [
         {
           'role': 'system',
@@ -227,9 +241,19 @@ Requested changes: {{requestedChanges}}`, {
           'content': userPrompt
         }
       ],
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' }
-    });
+      model,
+      ...options
+    };
+
+    console.log('[OpenAI] request', request);
+
+    const start = Date.now();
+
+    const chatCompletion = await openai.chat.completions.create(request);
+
+    const end = Date.now();
+
+    console.log('[OpenAI] Request took', (end - start) / 1000, 'seconds');
 
     const { choices = [] } = chatCompletion;
 
@@ -241,6 +265,8 @@ Requested changes: {{requestedChanges}}`, {
 
     const { content } = message;
 
-    return content === 'NULL' ? null : JSON.parse(content);
+    console.log('[OpenAI] response', content);
+
+    return content;
   }
 }
