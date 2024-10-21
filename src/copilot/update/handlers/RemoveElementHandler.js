@@ -13,7 +13,7 @@ export default class RemoveElementHandler {
     const element = elementRegistry.get(id);
 
     if (!element) {
-      return `Element with ID ${id} not found.`;
+      throw new Error(`Element with ID ${id} not found.`);
     }
 
     this._bpmnjs.get('modeling').removeShape(element);

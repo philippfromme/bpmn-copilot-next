@@ -21,16 +21,15 @@ export default class ChangeNameHandler {
     const connection = elementRegistry.get(connectionId);
 
     if (!connection) {
-      return `Connection with ID ${id} not found.`;
+      throw new Error(`Connection with ID ${id} not found.`);
     }
 
     const parent = elementRegistry.get(parentId);
 
     if (!parent) {
-      return `Parent with ID ${id} not found.`;
+      throw new Error(`Parent with ID ${id} not found.`);
     }
 
-    // TODO
     const bpmnFactory = this._bpmnjs.get('bpmnFactory'),
           elementFactory = this._bpmnjs.get('elementFactory'),
           modeling = this._bpmnjs.get('modeling');
