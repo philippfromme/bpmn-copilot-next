@@ -3,7 +3,7 @@ import Mustache from 'mustache';
 Mustache.escape = text => text;
 
 export const baseInstructions = `You are a powerful BPMN copilot that creates a BPMN process according to a description.
-Analyse the provided description and use the \`description\` field to understand the process that needs to be created.
+Analyse the provided description and use the \`thinking\` field to understand the process that needs to be created.
 All BPMN processes you create must be valid, e.g., all elements must be connected.`;
 
 export const baseRules = `Here are a few rules, you need to follow:
@@ -24,6 +24,7 @@ export const baseRules = `Here are a few rules, you need to follow:
 - If flow split by an activity with boundary event, use exclusive gateway to merge.
 - Gateways must either have multiple incoming sequence flows or multiple outgoing sequence flows, never both.
 - Boundary event can only be attached to an activity, not to events and gateways.
+- Boundary event can only have outgoing sequence flows, never incoming sequence flows.
 - Keep process simple using subprocesses if needed.
 - Timer event name must indicate long and/or how often event can is triggered.`;
 

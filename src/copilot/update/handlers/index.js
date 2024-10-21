@@ -1,13 +1,13 @@
 import AddConnectionHandler from "./AddConnectionHandler";
 import AddShapeHandler from "./AddShapeHandler";
-import ChangeNameHandler from "./ChangeNameHandler";
-import ChangeElementTypeHandler from "./ChangeElementTypeHandler";
-import InsertElementHandler from "./InsertElementHandler";
+import UpdateNameHandler from "./UpdateNameHandler";
+import UpdateElementTypeHandler from "./UpdateElementTypeHandler";
 import RemoveElementHandler from "./RemoveElementHandler";
 
 export default [
-  ChangeNameHandler,
-  ChangeElementTypeHandler,
-  InsertElementHandler,
+  AddConnectionHandler,
+  AddShapeHandler,
+  UpdateNameHandler,
+  UpdateElementTypeHandler,
   RemoveElementHandler
 ];

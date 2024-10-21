@@ -88,9 +88,13 @@ export default class Copilot {
         const {
           changes,
           responseText
-        } = await this._updateBpmn(prompt, toJson(this._bpmnjs.getDefinitions()));
+        } = await this._updateBpmn(
+          prompt,
+          toJson(this._bpmnjs.getDefinitions()),
+          this._bpmnjs.get('selection').get().map(({ id }) => id)
+        );
 
-        let changedElements = [];
+        let changed = [];
 
         for (const change of changes) {
           const { zodType } = change;
@@ -103,19 +107,22 @@ export default class Copilot {
             break;
           }
 
-          const _changedElements = handler.apply(change);
+          const {
+            changed: _changed,
+            layout
+          } = handler.apply(change);
 
-          for (const element of _changedElements) {
-            if (!changedElements.includes(element)) {
-              changedElements.push(element);
+          for (const element of changed) {
+            if (!changed.includes(element)) {
+              changed.push(element);
             }
           }
         }
 
-        if (changedElements.length) {
+        if (changed.length) {
           this._bpmnjs.get('canvas').zoom('fit-viewport');
 
-          this._bpmnjs.get('selection').select(changedElements);
+          this._bpmnjs.get('selection').select(changed);
         }
 
         return responseText;
@@ -171,12 +178,12 @@ ${JSON.stringify(bpmnJson)}`,
     };
   }
 
-  async _updateBpmn(prompt, bpmnJson) {
+  async _updateBpmn(prompt, bpmnJson, selected) {
     const {
       changes,
       responseText
     } = await this._getCompletion({
-      systemPrompt: getUpdateBpmnSystemPrompt(bpmnJson),
+      systemPrompt: getUpdateBpmnSystemPrompt(bpmnJson, selected),
       userPrompt: prompt,
       response_format: zodResponseFormat(updateBpmnSchema, "updateBpmnResponse")
     });

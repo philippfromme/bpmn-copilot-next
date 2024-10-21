@@ -18,7 +18,10 @@ export default class RemoveElementHandler {
 
     this._bpmnjs.get('modeling').removeShape(element);
 
-    return [];
+    return {
+      changed: [],
+      layout: []
+    };
   }
 
   static id = 'removeElement';

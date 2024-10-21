@@ -10,17 +10,10 @@ export default class AddShapeHandler {
       id,
       name,
       type,
-      connection: connectionId,
       parent: parentId
     } = change;
 
     const elementRegistry = this._bpmnjs.get('elementRegistry');
-
-    const connection = elementRegistry.get(connectionId);
-
-    if (!connection) {
-      throw new Error(`Connection with ID ${id} not found.`);
-    }
 
     const parent = elementRegistry.get(parentId);
 
@@ -44,13 +37,16 @@ export default class AddShapeHandler {
     });
 
     const newElementMid = {
-      x: 100,
-      y: 100
+      x: 0,
+      y: 0
     };
 
     modeling.createShape(newElement, newElementMid, parent);
 
-    return [ newElement ];
+    return {
+      changed: [newElement],
+      layout: [newElement]
+    };
   }
 
   static id = 'addShape';

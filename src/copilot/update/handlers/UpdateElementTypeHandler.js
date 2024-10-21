@@ -6,7 +6,7 @@ export default class ChangeNameHandler {
   }
 
   apply(change) {
-    const { id, name } = change;
+    const { id, type } = change;
 
     const elementRegistry = this._bpmnjs.get('elementRegistry');
 
@@ -16,20 +16,21 @@ export default class ChangeNameHandler {
       throw new Error(`Element with ID ${id} not found.`);
     }
 
-    this._bpmnjs.get('modeling').updateProperties(element, {
-      name
-    });
+    this._bpmnjs.get('bpmnReplace').replaceElement(element, { type });
 
-    return [element];
+    return {
+      changed: [element],
+      layout: []
+    }
   }
 
-  static id = 'changeName';
+  static id = 'updateElementType';
 
-  static description = 'Change the name of an element';
+  static description = 'Update the type of an element (e.g., from bpmn:Task to a bpmn:UserTask)';
 
   static schema = zod.object({
     zodType: zod.literal(ChangeNameHandler.id),
-    id: zod.string().describe('ID of the element to change'),
-    name: zod.string().describe('New name of the element')
+    id: zod.string().describe('ID of the element to update'),
+    type: zod.string().describe('New type of the update')
   });
 }

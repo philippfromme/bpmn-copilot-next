@@ -69,11 +69,24 @@ function ChatComponent({ copilot, bpmnjs }) {
   const [ isPrompting, setIsPrompting ] = useState(false);
   const [ hasSelection, setHasSelection ] = useState(false);
   const [ selectionLength, setSelectionLength ] = useState(0);
+  const [ selectedElementName, setSelectedElementName ] = useState(null);
   const [ examplePromptsVisible, setExamplePromptsVisible ] = useState(true);
 
   bpmnjs.on('selection.changed', ({ newSelection }) => {
     setHasSelection(newSelection.length > 0);
     setSelectionLength(newSelection.length);
+
+    if (newSelection.length === 1) {
+      const [ element ] = newSelection;
+
+      if (element.businessObject.name) {
+        setSelectedElementName(element.businessObject.name);
+      } else {
+        setSelectedElementName(null);
+      }
+    } else {
+      setSelectedElementName(null);
+    }
   });
 
   const submitPrompt = useCallback(async (_value) => {
@@ -236,7 +249,11 @@ function ChatComponent({ copilot, bpmnjs }) {
                       label="Close"
                       kind="ghost"
                       onClick={ () => bpmnjs.get('selection').select(null) }>
-                      { selectionLength } { selectionLength === 1 ? 'element' : 'elements' } selected
+                      {
+                        selectedElementName
+                          ? <span><i>{ shorten(selectedElementName) }</i> selected</span>
+                          : <span>{ selectionLength } { selectionLength === 1 ? 'element' : 'elements' } selected</span>
+                      }
                     </Button>
                   </div>
                 )
@@ -281,4 +298,14 @@ function Message(props) {
       <div className="chatbot-message-bubble">{children}</div>
     </div>
   );
+}
+
+const MAX_LENGTH = 15;
+
+function shorten(text) {
+  if (text.length > MAX_LENGTH) {
+    return text.slice(0, MAX_LENGTH) + '...';
+  }
+
+  return text;
 }

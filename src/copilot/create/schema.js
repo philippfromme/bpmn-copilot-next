@@ -116,7 +116,7 @@ export const processSchema = zod.object({
 });
 
 export const createBpmnSchema = zod.object({
-  description: zod.string().describe('Detailed description of the process that will be created.'),
+  thinking: zod.string().describe('Your thought process behind the process you are going to create'),
   process: processSchema,
   responseText: zod.string().describe('Response text that will be shown to the user after the process has been created')
 });
