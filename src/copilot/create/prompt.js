@@ -6,27 +6,41 @@ export const baseInstructions = `You are a powerful BPMN copilot that creates a 
 Analyse the provided description and use the \`thinking\` field to understand the process that needs to be created.
 All BPMN processes you create must be valid, e.g., all elements must be connected.`;
 
-export const baseRules = `Here are a few rules, you need to follow:
-- Events should be labeled using object + past participle.
-- Start events should always be labeled with an indication of the trigger of the process.
-- End events should be labeled with the end state of the process.
+export const baseRules = `Follow these rules to create a valid BPMN process:
+
+# General
+- Use most specific BPMN elements instead of unspecific elements (e.g., use bpmn:UserTask instead of bpmn:Task if applicable
+- Keep process simple using subprocesses if needed.
+
+# Activities
 - Tasks should be labeled using object + verb.
+
+# Gateways
 - Exclusive gateways should be labeled with a question.
 - Outgoing sequence flows should be labeled with the possible answers to these questions (conditions).
 - All other sequence flows should not be labeled.
-- Start events must have one outgoing sequence flow.
-- End events must have one incoming sequence flow.
-- All other activities must have at least one of each.
-- Use most specific BPMN elements instead of unspecific elements (e.g., use bpmn:UserTask instead of bpmn:Task if applicable
 - Use exclusive gateway if exactly one sequence flow should be taken. Use exclusive gateway to merge.
 - Use parallel gateway if all sequence flows should be taken. Use parallel gateway to merge.
 - Use inclusive gateway if one or many sequence flows can be taken. Use inclusive gateway to merge.
 - If flow split by an activity with boundary event, use exclusive gateway to merge.
 - Gateways must either have multiple incoming sequence flows or multiple outgoing sequence flows, never both.
+
+# Events
+- Events should be labeled using object + past participle.
+- Start events should always be labeled with an indication of the trigger of the process.
+- End events should be labeled with the end state of the process.
+- Timer event name must indicate long and/or how often event can is triggered.
+
+# Boundary Events
 - Boundary event can only be attached to an activity, not to events and gateways.
-- Boundary event can only have outgoing sequence flows, never incoming sequence flows.
-- Keep process simple using subprocesses if needed.
-- Timer event name must indicate long and/or how often event can is triggered.`;
+- Boundary event must have one outgoing sequence flow and no incoming sequence flow.
+
+# Sequence Flows
+- There can never be more than one sequence flow between two elements.
+- Start events must have one outgoing sequence flow.
+- End events must have one incoming sequence flow.
+- All other activities must have at least one of each.
+`;
 
 export const validJson = {
   'id': 'Process_1',

@@ -73,6 +73,7 @@ function ChatComponent({ copilot, bpmnjs }) {
   const [ selectionLength, setSelectionLength ] = useState(0);
   const [ selectedElementName, setSelectedElementName ] = useState(null);
   const [ examplePromptsVisible, setExamplePromptsVisible ] = useState(true);
+  const [ loadingMessage, setLoadingMessage ] = useState(null);
 
   bpmnjs.on('selection.changed', ({ newSelection }) => {
     setHasSelection(newSelection.length > 0);
@@ -92,6 +93,8 @@ function ChatComponent({ copilot, bpmnjs }) {
   });
 
   const submitPrompt = useCallback(async (_value) => {
+    setLoadingMessage('Thinking...');
+
     const prompt = _value || value.trim();
 
     addMessage({ type: 'human', text: prompt });
@@ -103,11 +106,14 @@ function ChatComponent({ copilot, bpmnjs }) {
     isPromptingRef.current = true;
     setIsPrompting(true);
 
-    const response = await copilot.submitPrompt(prompt);
+    const response = await copilot.submitPrompt(prompt, setLoadingMessage);
 
     addMessage({ type: 'ai', text: response });
 
     isPromptingRef.current = false;
+
+    setLoadingMessage(null);
+    
     setIsPrompting(false);
   }, [ addMessage, value ]);
 
@@ -192,7 +198,7 @@ function ChatComponent({ copilot, bpmnjs }) {
             ))}
             {isPrompting && (
               <Message type="ai">
-                <InlineLoading />
+                <span className="chatbot-message-loading"><InlineLoading />{loadingMessage}</span>
               </Message>
             )}
           </div>

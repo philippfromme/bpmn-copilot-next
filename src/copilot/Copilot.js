@@ -31,7 +31,7 @@ export default class Copilot {
     this._history = [];
   }
 
-  async submitPrompt(prompt) {
+  async submitPrompt(prompt, setLoadingMessage) {
     this._history.push({
       role: 'user',
       content: prompt
@@ -57,6 +57,8 @@ export default class Copilot {
     }
 
     if (action === 'createBpmn') {
+
+      setLoadingMessage('Creating BPMN process...');
 
       try {
         const {
@@ -86,6 +88,8 @@ export default class Copilot {
         return `Error: ${error.message}`;
       }
     } else if (action === 'updateBpmn') {
+
+      setLoadingMessage('Updating BPMN process...');
 
       try {
         const {
@@ -136,6 +140,8 @@ export default class Copilot {
         return `Error: ${error.message}`;
       }
     } else if (action === 'fallback') {
+
+      setLoadingMessage('Responding...');
 
       const responseText = await this._fallback(prompt);
 
