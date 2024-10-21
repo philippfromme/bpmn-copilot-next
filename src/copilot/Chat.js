@@ -24,8 +24,9 @@ import classnames from 'classnames';
 import Copilot from './Copilot';
 
 const EXAMPLE_PROMPTS = [
-  'Create a hiring process',
-  'Include a background check in the hiring process',
+  'Create an error handling process',
+  'Change the process to update the CMS record manually',
+  'Require a manager approval before granting access to the platform',
   'Explain what a subprocess is',
   'How do I buy bitcoins?'
 ];

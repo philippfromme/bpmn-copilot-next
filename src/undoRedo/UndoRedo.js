@@ -49,6 +49,7 @@ function UndoRedoComponent({ commandStack, eventBus }) {
         disabled={ !canUndo }
         onClick={ onUndo }
         renderIcon={ Undo }
+        iconDescription="Undo"
       >
       </Button>
       <Button
@@ -57,6 +58,7 @@ function UndoRedoComponent({ commandStack, eventBus }) {
         disabled={ !canRedo }
         onClick={ onRedo }
         renderIcon={ Redo }
+        iconDescription="Redo"
       >
       </Button>
     </div>
