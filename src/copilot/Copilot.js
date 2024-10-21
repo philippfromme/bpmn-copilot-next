@@ -49,14 +49,8 @@ export default class Copilot {
       return 'I could not understand your request. Please try again.';
     }
 
-    /**
-     * 2. Perform the action.
-     */
     if (action === 'createBpmn') {
 
-      /**
-       * 2.1. Create a new BPMN process.
-       */
       try {
         const {
           bpmnJson,
@@ -81,9 +75,6 @@ export default class Copilot {
       }
     } else if (action === 'updateBpmn') {
 
-      /**
-       * 2.2. Update an existing BPMN process.
-       */
       try {
         const {
           changes,
@@ -131,12 +122,9 @@ export default class Copilot {
 
         return `Error: ${error.message}`;
       }
-    } else if (action === 'respondText') {
+    } else if (action === 'fallback') {
 
-      /**
-       * 2.3. Respond to a general question.
-       */
-      const responseText = await this._respondText(prompt);
+      const responseText = await this._fallback(prompt);
 
       return responseText;
     }
@@ -147,15 +135,19 @@ export default class Copilot {
       systemPrompt: `You are a BPMN expert that helps users create and update BPMN processes. You receive a prompt from the user and decide what action to take.
 Possible actions are:
 - \`createBpmn\` if the user wants to create a BPMN process
-- \`updatedBpmn\` if the user wants to update a BPMN process (considering the existing process)
-- \`respondText\` if the prompt is not related to creating or updating a BPMN process and should be responded to with text
+- \`updateBpmn\` if the user wants to update a BPMN process (considering the existing process)
+- \`fallback\` whenever the response should be text e.g., when you need to ask for clarification or if the prompt is not related to creating or updating a BPMN process and should be responded to with text
 
 Existing process:
 ${JSON.stringify(bpmnJson)}`,
       userPrompt: prompt,
       model: 'gpt-4o-mini',
       response_format: zodResponseFormat(zod.object({
-        action: zod.enum([ 'createBpmn', 'updateBpmn', 'respondText' ])
+        action: zod.enum([
+          'createBpmn',
+          'updateBpmn',
+          'fallback'
+        ])
       }), 'getActionResponse')
     });
 
@@ -194,16 +186,17 @@ ${JSON.stringify(bpmnJson)}`,
     };
   }
 
-  async _respondText(prompt) {
+  async _fallback(prompt) {
     const { responseText } = await this._getCompletion({
       systemPrompt: `You are a BPMN expert that helps users with questions related to BPMN processes. Your response is
-going to be shown directly to the user. Make sure to provide a helpful response. If you cannot provide a helpful
-response or the prompt is not related to BPMN processes, reply in a way that indicates that. For example: "I'm sorry, I
-cannot provide a helpful response to this question."`,
+going to be shown directly to the user. Make sure to provide a helpful response. If the requirements given by the user
+are unclear, ask for clarification. If you cannot provide a helpful response or the prompt is not related to BPMN
+processes, reply in a way that indicates that. For example: "I'm sorry, I cannot provide a helpful response to this
+question."`,
       userPrompt: prompt,
       response_format: zodResponseFormat(zod.object({
         responseText: zod.string()
-      }), "respondTextResponse")
+      }), "responseText")
     });
 
     return responseText;

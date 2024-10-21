@@ -19,6 +19,8 @@ import {
 
 import { ChatBot, Close, ArrowRight, UserAvatar } from '@carbon/icons-react';
 
+import Markdown from 'react-markdown';
+
 import classnames from 'classnames';
 
 import Copilot from './Copilot';
@@ -185,7 +187,7 @@ function ChatComponent({ copilot, bpmnjs }) {
           <div ref={ ref } className="chatbot-messages">
             {messages.map((message, index) => (
               <Message key={ index } type={ message.type }>
-                {message.text}
+                <Markdown>{message.text}</Markdown>
               </Message>
             ))}
             {isPrompting && (
@@ -237,6 +239,7 @@ function ChatComponent({ copilot, bpmnjs }) {
               onInput={ onInput }
               onKeyDown={ onKeyDown }
               value={ value }
+              spellCheck={ false }
             />
             <div className="chatbot-input-controls">
               {
