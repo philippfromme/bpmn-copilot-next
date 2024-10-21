@@ -22,6 +22,10 @@ body {
   display: flex;
 }
 
+.djs-cursor-grab {
+  user-select: none !important;
+}
+
 .bjs-powered-by {
   right: initial !important;
   left: 15px !important;
@@ -38,6 +42,7 @@ body {
 }
 
 #chatbot-container {
+  z-index: 1000;
   position: absolute;
   bottom: 20px;
   right: 20px;
@@ -49,6 +54,7 @@ body {
 
   .chatbot-toggle {
     border-radius: 4px;
+    box-shadow: var(--context-pad-box-shadow);
   }
 
   .chatbot {
