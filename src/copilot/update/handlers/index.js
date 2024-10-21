@@ -3,7 +3,7 @@ import AddShapeHandler from "./AddShapeHandler";
 import ReconnectConnectionHandler from "./ReconnectConnectionHandler";
 import UpdateNameHandler from "./UpdateNameHandler";
 import UpdateElementTypeHandler from "./UpdateElementTypeHandler";
-import RemoveElementHandler from "./RemoveElementHandler";
+import RemoveElementsHandler from "./RemoveElementsHandler";
 
 export default [
   AddConnectionHandler,
@@ -11,5 +11,5 @@ export default [
   ReconnectConnectionHandler,
   UpdateNameHandler,
   UpdateElementTypeHandler,
-  RemoveElementHandler
+  RemoveElementsHandler
 ];
