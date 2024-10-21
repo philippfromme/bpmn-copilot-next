@@ -26,7 +26,10 @@ const modeler = new Modeler({
     CopilotModule,
     UndoRedoModule,
     CreateAppendAnythingModule,
-    BpmnImprovedCanvasModule
+    BpmnImprovedCanvasModule,
+    {
+      showComments: [ 'value', null ]
+    }
   ],
   keyboard: {
     bindTo: document,
