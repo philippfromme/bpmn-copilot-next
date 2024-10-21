@@ -236,7 +236,7 @@ function ChatComponent({ copilot, bpmnjs }) {
                       label="Close"
                       kind="ghost"
                       onClick={ () => bpmnjs.get('selection').select(null) }>
-                      { selectionLength } elements selected
+                      { selectionLength } { selectionLength === 1 ? 'element' : 'elements' } selected
                     </Button>
                   </div>
                 )
