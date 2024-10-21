@@ -15,19 +15,17 @@ The following changes can be applied to the process:
 
 ${handlers.map(handler => `- ${handler.description}`).join('\n')}`;
 
-export function getSystemPrompt(bpmnJson, selected) {
-  return Mustache.render(`{{baseInstructions}}
-{{baseRules}}
-{{formatInstructions}}
-# Process to apply changes to:
-{{bpmnJson}}
+export function getSystemPrompt(history, bpmnJson, selected) {
+  return `${baseInstructions}
+${baseRules}
+${formatInstructions}
+
+# Chat history so far (limited to the last 5 messages):
+${history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}
+
+# Existing process:
+${JSON.stringify(bpmnJson)}
 
 # Elements selected by user:
-{{selected}}`, {
-    baseInstructions,
-    baseRules,
-    formatInstructions,
-    bpmnJson: JSON.stringify(bpmnJson),
-    selected: JSON.stringify(selected)
-  });
+${JSON.stringify(selected)}`;
 };

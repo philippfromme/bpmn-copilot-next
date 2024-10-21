@@ -7,7 +7,7 @@ import zod from 'zod';
 import fromJson from './create/fromJson';
 import { toJson } from './update/toJson';
 
-import { systemPrompt as createBpmnSystemPrompt } from './create/prompt';
+import { getSystemPrompt as getCreateBpmnSystemPrompt } from './create/prompt';
 import { getSystemPrompt as getUpdateBpmnSystemPrompt } from './update/prompt';
 
 import { createBpmnSchema } from './create/schema';
@@ -27,16 +27,23 @@ export default class Copilot {
     this._bpmnjs = bpmnjs;
 
     this._handlers = handlers.map((Handler) => new Handler(bpmnjs));
+
+    this._history = [];
   }
 
   async submitPrompt(prompt) {
+    this._history.push({
+      role: 'user',
+      content: prompt
+    });
+
     let action;
 
     /**
      * 1. Decide what action to take based on the user prompt.
      */
     try {
-      const response = await this._getAction(prompt, toJson(this._bpmnjs.getDefinitions()));
+      const response = await this._getAction(prompt);
 
       ({ action } = response);
     } catch (error) {
@@ -67,6 +74,11 @@ export default class Copilot {
 
         this._bpmnjs.get('canvas').zoom('fit-viewport');
 
+        this._history.push({
+          role: 'assistant',
+          content: responseText
+        });
+
         return responseText;
       } catch (error) {
         console.log('error', error);
@@ -79,11 +91,7 @@ export default class Copilot {
         const {
           changes,
           responseText
-        } = await this._updateBpmn(
-          prompt,
-          toJson(this._bpmnjs.getDefinitions()),
-          this._bpmnjs.get('selection').get().map(({ id }) => id)
-        );
+        } = await this._updateBpmn(prompt);
 
         let changed = [];
 
@@ -116,6 +124,11 @@ export default class Copilot {
           this._bpmnjs.get('selection').select(changed);
         }
 
+        this._history.push({
+          role: 'assistant',
+          content: responseText
+        });
+
         return responseText;
       } catch (error) {
         console.log('error', error);
@@ -126,19 +139,29 @@ export default class Copilot {
 
       const responseText = await this._fallback(prompt);
 
+      this._history.push({
+        role: 'assistant',
+        content: responseText
+      });
+
       return responseText;
     }
   }
 
-  async _getAction(prompt, bpmnJson) {
+  async _getAction(prompt) {
+    const bpmnJson = toJson(this._bpmnjs.getDefinitions());
+
     const response = await this._getCompletion({
       systemPrompt: `You are a BPMN expert that helps users create and update BPMN processes. You receive a prompt from the user and decide what action to take.
 Possible actions are:
 - \`createBpmn\` if the user wants to create a BPMN process
 - \`updateBpmn\` if the user wants to update a BPMN process (considering the existing process)
-- \`fallback\` whenever the response should be text e.g., when you need to ask for clarification or if the prompt is not related to creating or updating a BPMN process and should be responded to with text
+- \`fallback\` whenever the response should be text e.g., when the requirements are unclear or if the prompt is not related to creating or updating a BPMN process; this is a fallback action
 
-Existing process:
+# Chat history so far (limited to the last 5 messages):
+${this._history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}
+
+# Existing process:
 ${JSON.stringify(bpmnJson)}`,
       userPrompt: prompt,
       model: 'gpt-4o-mini',
@@ -159,7 +182,7 @@ ${JSON.stringify(bpmnJson)}`,
       process,
       responseText
     } = await this._getCompletion({
-      systemPrompt: createBpmnSystemPrompt,
+      systemPrompt: getCreateBpmnSystemPrompt(this._history),
       userPrompt: prompt,
       response_format: zodResponseFormat(createBpmnSchema, "createBpmnResponse")
     });
@@ -170,12 +193,15 @@ ${JSON.stringify(bpmnJson)}`,
     };
   }
 
-  async _updateBpmn(prompt, bpmnJson, selected) {
+  async _updateBpmn(prompt) {
+    const bpmnJson = toJson(this._bpmnjs.getDefinitions()),
+          selected = this._bpmnjs.get('selection').get().map(({ id }) => id);
+
     const {
       changes,
       responseText
     } = await this._getCompletion({
-      systemPrompt: getUpdateBpmnSystemPrompt(bpmnJson, selected),
+      systemPrompt: getUpdateBpmnSystemPrompt(this._history, bpmnJson, selected),
       userPrompt: prompt,
       response_format: zodResponseFormat(updateBpmnSchema, "updateBpmnResponse")
     });
@@ -187,12 +213,23 @@ ${JSON.stringify(bpmnJson)}`,
   }
 
   async _fallback(prompt) {
+    const bpmnJson = toJson(this._bpmnjs.getDefinitions()),
+          selected = this._bpmnjs.get('selection').get().map(({ id }) => id);
+
     const { responseText } = await this._getCompletion({
       systemPrompt: `You are a BPMN expert that helps users with questions related to BPMN processes. Your response is
 going to be shown directly to the user. Make sure to provide a helpful response. If the requirements given by the user
 are unclear, ask for clarification. If you cannot provide a helpful response or the prompt is not related to BPMN
-processes, reply in a way that indicates that. For example: "I'm sorry, I cannot provide a helpful response to this
-question."`,
+processes, reply in a way that indicates that. Your response must not be longer than 300 characters.
+
+# Chat history so far (limited to the last 5 messages):
+${this._history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}
+
+# Existing process:
+${JSON.stringify(bpmnJson)}
+
+# Elements selected by user:
+${JSON.stringify(selected)}`,
       userPrompt: prompt,
       response_format: zodResponseFormat(zod.object({
         responseText: zod.string()
@@ -203,6 +240,8 @@ question."`,
   }
 
   async _getCompletion({ systemPrompt, userPrompt, model = 'gpt-4o', ...options }) {
+    console.log('[OpenAI] systemPrompt', systemPrompt);
+
     const request = {
       messages: [
         {

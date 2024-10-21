@@ -159,10 +159,11 @@ export const formatInstructions = Mustache.render(`'Example of valid JSON output
   validJson: JSON.stringify(validJson)
 });
 
-export const systemPrompt = Mustache.render(`{{baseInstructions}}
-{{baseRules}}
-{{formatInstructions}}`, {
-  baseInstructions,
-  baseRules,
-  formatInstructions
-});
+export function getSystemPrompt(history) {
+  return `${baseInstructions}
+${baseRules}
+${formatInstructions}
+
+# Chat history so far (limited to the last 5 messages):
+${history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}`;
+}
