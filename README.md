@@ -1,3 +1,1 @@
-# BpmnGPT
-
-![](docs/screenshot.png)
+# BPMN Copilot
