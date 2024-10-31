@@ -21,7 +21,7 @@ export default class ChangeNameHandler {
     });
 
     return {
-      changed: [element],
+      changed: [ element ],
       layout: []
     };
   }

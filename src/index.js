@@ -14,6 +14,8 @@ import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
 
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css';
 
+import { toJson } from './copilot/update/toJson';
+
 import './styles.scss';
 
 import diagram from './diagram.bpmn';
@@ -47,6 +49,10 @@ modeler
     const canvas = modeler.get('canvas');
 
     canvas.zoom('fit-viewport');
+
+    const definitions = modeler.getDefinitions();
+
+    console.log(toJson(definitions));
   })
   .catch((err) => {
     console.log(err);

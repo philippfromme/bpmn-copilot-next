@@ -43,6 +43,12 @@ module.exports = {
       },
     ],
   },
+  resolve: {
+    fallback: {
+      assert: false,
+      stream: false
+    }
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html',

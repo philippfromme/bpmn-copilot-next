@@ -1,9 +1,6 @@
-import Mustache from 'mustache';
-
-Mustache.escape = text => text;
-
 export const baseInstructions = `You are a powerful BPMN copilot that creates a BPMN process according to a description.
-Analyse the provided description and use the \`thinking\` field to understand the process that needs to be created.
+Analyse the provided description to understand the request.
+Think step by step how to create the BPMN process.
 All BPMN processes you create must be valid, e.g., all elements must be connected.`;
 
 export const baseRules = `Follow these rules to create a valid BPMN process:
@@ -40,6 +37,55 @@ export const baseRules = `Follow these rules to create a valid BPMN process:
 - Start events must have one outgoing sequence flow.
 - End events must have one incoming sequence flow.
 - All other activities must have at least one of each.
+`;
+
+export const allowList = `# Allowed BPMN elements:
+
+## Events:
+
+- bpmn:StartEvent
+- bpmn:EndEvent
+- bpmn:IntermediateCatchEvent
+- bpmn:IntermediateThrowEvent
+- bpmn:BoundaryEvent
+
+## EventDefinitions:
+
+- bpmn:CancelEventDefinition
+- bpmn:CompensateEventDefinition
+- bpmn:ConditionalEventDefinition
+- bpmn:ErrorEventDefinition
+- bpmn:LinkEventDefinition
+- bpmn:MessageEventDefinition
+- bpmn:SignalEventDefinition
+- bpmn:TimerEventDefinition
+
+## Activities:
+
+- bpmn:Task
+- bpmn:BusinessRuleTask
+- bpmn:ManualTask
+- bpmn:ReceiveTask
+- bpmn:ScriptTask
+- bpmn:SendTask
+- bpmn:ServiceTask
+- bpmn:UserTask
+
+## Gateways:
+
+- bpmn:EventBasedGateway
+- bpmn:ExclusiveGateway
+- bpmn:InclusiveGateway
+- bpmn:ParallelGateway
+
+## Connections:
+
+- bpmn:SequenceFlow
+
+## Sub-processes:
+
+- bpmn:CallActivity
+- bpmn:SubProcess
 `;
 
 export const validJson = {
@@ -106,78 +152,78 @@ export const validJson = {
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'StartEvent_1',
-      'target': 'Task_1',
-      'parent': 'Process_1'
+      'target': 'Task_1'
     },
     {
       'id': 'SequenceFlow_2',
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'Task_1',
-      'target': 'ExclusiveGateway_1',
-      'parent': 'Process_1'
+      'target': 'ExclusiveGateway_1'
     },
     {
       'id': 'SequenceFlow_3',
       'name': 'Yes',
       'type': 'bpmn:SequenceFlow',
       'source': 'ExclusiveGateway_1',
-      'target': 'Task_2',
-      'parent': 'Process_1'
+      'target': 'Task_2'
     },
     {
       'id': 'SequenceFlow_4',
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'Task_2',
-      'target': 'IntermediateCatchEvent_1',
-      'parent': 'Process_1'
+      'target': 'IntermediateCatchEvent_1'
     },
     {
       'id': 'SequenceFlow_5',
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'IntermediateCatchEvent_1',
-      'target': 'Task_3',
-      'parent': 'Process_1'
+      'target': 'Task_3'
     },
     {
       'id': 'SequenceFlow_6',
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'Task_3',
-      'target': 'EndEvent_1',
-      'parent': 'Process_1'
+      'target': 'EndEvent_1'
     },
     {
       'id': 'SequenceFlow_7',
       'name': 'No',
       'type': 'bpmn:SequenceFlow',
       'source': 'ExclusiveGateway_1',
-      'target': 'Task_4',
-      'parent': 'Process_1'
+      'target': 'Task_4'
     },
     {
       'id': 'SequenceFlow_8',
       'name': '',
       'type': 'bpmn:SequenceFlow',
       'source': 'Task_4',
-      'target': 'EndEvent_2',
-      'parent': 'Process_1'
+      'target': 'EndEvent_2'
     }
   ]
 };
 
-export const formatInstructions = Mustache.render(`'Example of valid JSON output:
-{{validJson}}'`, {
-  validJson: JSON.stringify(validJson)
-});
+export const formatInstructions = `# Example of valid JSON output:
+
+${JSON.stringify(validJson)}`;
 
 export function getSystemPrompt(history) {
   return `${baseInstructions}
 ${baseRules}
+${allowList}
 ${formatInstructions}
 
 # Chat history so far (limited to the last 5 messages):
-${history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}`;
+${history.slice(-5).map(({ role, content }) => `- ${role}: ${content}`).join('\n')}
+
+Before answering, explain your reasoning step-by-step in <thinking> tags.
+Use the <response> tags for a message that will be shown to the user. This message must not contain any information about the tool you use.
+
+# Template:
+
+<thinking></thinking>
+<response></response>`;
 }

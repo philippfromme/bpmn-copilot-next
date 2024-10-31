@@ -151,11 +151,10 @@ body {
 
         * {
           font-size: 14px !important;
-          line-height: 1.25;
         }
 
-        p, li {
-          margin-bottom: 4px;
+        p, li, ul, ol {
+          margin-bottom: 6px;
 
           &:last-child {
             margin-bottom: 0;
@@ -164,11 +163,17 @@ body {
 
         ul {
           list-style-type: none;
+          list-style-position: inside;
           
           li::before {
             content: "- ";
             margin-right: 4px;
           }
+        }
+
+        ol {
+          list-style-type: decimal;
+          list-style-position: inside;
         }
       }
     }

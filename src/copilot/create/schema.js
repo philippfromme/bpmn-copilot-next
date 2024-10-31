@@ -26,7 +26,7 @@ const types = prefix([
   'SendTask',
   'ServiceTask',
   'UserTask',
-  
+
   /**
    * Sub-processes
   */
@@ -71,7 +71,6 @@ const connectionSchema = zod.object({
   id: zod.string().describe('Unique identifier for the element'),
   name: zod.string().optional().describe('Name of the element'),
   type: zod.enum(types).describe('Type of the element'),
-  parent: zod.string().describe('ID of parent element'),
   source: zod.string().optional().describe('ID of source element, used only for sequence flows'),
   target: zod.string().optional().describe('ID of target element, used only for sequence flows')
 });
@@ -104,7 +103,6 @@ const boundaryEventSchema = zod.object({
 });
 
 export const processSchema = zod.object({
-  id: zod.string().describe('Unique identifier for the process'),
   name: zod.string().describe('Name of the process'),
   elements: zod.array(zod.discriminatedUnion('zodType', [
     activitySchema,
@@ -116,7 +114,5 @@ export const processSchema = zod.object({
 });
 
 export const createBpmnSchema = zod.object({
-  thinking: zod.string().describe('Your thought process behind the process you are going to create'),
-  process: processSchema,
-  responseText: zod.string().describe('Response text that will be shown to the user after the process has been created')
+  process: processSchema
 });

@@ -19,9 +19,9 @@ export default class ChangeNameHandler {
     this._bpmnjs.get('bpmnReplace').replaceElement(element, { type });
 
     return {
-      changed: [element],
+      changed: [ element ],
       layout: []
-    }
+    };
   }
 
   static id = 'updateElementType';

@@ -13,7 +13,7 @@ export default class RemoveElementsHandler {
     const elements = ids.map(id => elementRegistry.get(id));
 
     if (!elements.every(element => element)) {
-      throw new Error(`One or more elements not found.`);
+      throw new Error('One or more elements not found.');
     }
 
     this._bpmnjs.get('modeling').removeElements(elements);

@@ -11,8 +11,7 @@ export default class AddConnectionHandler {
       type,
       name,
       source,
-      target,
-      parent
+      target
     } = change;
 
     const elementRegistry = this._bpmnjs.get('elementRegistry');
@@ -37,14 +36,14 @@ export default class AddConnectionHandler {
     });
 
     return {
-      changed: [newConnection],
+      changed: [ newConnection ],
       layout: []
     };
   }
 
   static id = 'addConnection';
 
-  static description = `Add a new connection to the process.`;
+  static description = 'Add a new connection to the process.';
 
   static schema = zod.object({
     zodType: zod.literal(AddConnectionHandler.id),

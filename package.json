@@ -10,6 +10,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.678.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.678.0",
+    "@aws-sdk/credential-providers": "^3.678.0",
     "@bpmn-io/properties-panel": "^3.24.1",
     "@camunda/improved-canvas": "^1.7.5",
     "@carbon/icons-react": "^11.51.0",
@@ -26,7 +29,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-markdown": "^8.0.7",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
@@ -35,9 +39,8 @@
     "babel-loader": "^8.2.5",
     "css-loader": "^7.1.2",
     "dotenv-webpack": "^8.0.1",
-    "eslint": "^8.40.0",
-    "eslint-plugin-bpmn-io": "^1.0.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint": "^9.13.0",
+    "eslint-plugin-bpmn-io": "^2.0.2",
     "html-webpack-plugin": "^5.6.2",
     "raw-loader": "^4.0.2",
     "sass": "^1.80.2",

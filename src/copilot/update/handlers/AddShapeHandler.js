@@ -44,14 +44,14 @@ export default class AddShapeHandler {
     modeling.createShape(newElement, newElementMid, parent);
 
     return {
-      changed: [newElement],
-      layout: [newElement]
+      changed: [ newElement ],
+      layout: [ newElement ]
     };
   }
 
   static id = 'addShape';
 
-  static description = `Add a new shape to the process.`;
+  static description = 'Add a new shape to the process.';
 
   static schema = zod.object({
     zodType: zod.literal(AddShapeHandler.id),

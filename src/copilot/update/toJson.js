@@ -6,7 +6,7 @@ export function toJson(definitions) {
   const { flowElements } = process;
 
   const elements = [];
-  
+
   const addFlowElements = (flowElements) => {
     flowElements.forEach((element) => {
       const json = {

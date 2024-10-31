@@ -36,14 +36,14 @@ export default class ReconnectConnectionHandler {
     });
 
     return {
-      changed: [connection],
+      changed: [ connection ],
       layout: []
     };
   }
 
   static id = 'reconnectConnection';
 
-  static description = `Reconnect an existing connection.`;
+  static description = 'Reconnect an existing connection.';
 
   static schema = zod.object({
     zodType: zod.literal(ReconnectConnectionHandler.id),

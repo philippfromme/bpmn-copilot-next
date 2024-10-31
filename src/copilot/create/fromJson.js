@@ -3,9 +3,11 @@ import { isArray } from 'min-dash';
 import { layoutProcess } from 'bpmn-auto-layout';
 
 export default async function fromJson(json, bpmnjs) {
+  let counter = 0;
+
   const moddle = bpmnjs.get('moddle');
 
-  function createElement(type, properties) {
+  function createModdleElement(type, properties) {
     const moddleElement = moddle.create(type, properties);
 
     const isReference = (propertyName, moddleElement) => {
@@ -43,90 +45,140 @@ export default async function fromJson(json, bpmnjs) {
     return moddleElement;
   }
 
-  const process = createElement('bpmn:Process', {
-    id: 'Process_1',
-    flowElements: [],
+  const definitions = createModdleElement('bpmn:Definitions', {
+    id: 'Definitions_1',
+    rootElements: []
   });
 
-  const definitions = createElement('bpmn:Definitions', {
-    id: 'Definitions_1',
-    rootElements: [
-      process
-    ],
+  const process = createModdleElement('bpmn:Process', {
+    id: 'Process_1',
+    flowElements: []
   });
+
+  definitions.rootElements.push(process);
+
+  process.$parent = definitions;
 
   const { elements } = json;
 
-  elements.forEach((elementJson) => {
-    const properties = {
-      id: elementJson.id,
-      name: elementJson.name
-    };
+  console.log('elements', elements);
 
-    if (elementJson.eventDefinitionType) {
-      properties.eventDefinitions = [
-        createElement(elementJson.eventDefinitionType, {})
-      ];
-    }
+  const elementsById = {
+    'Process_1': process
+  };
 
-    const element = createElement(elementJson.type, properties);
+  while (elements.length && counter < 100) {
+    console.log(elements.length, 'elements left');
 
-    process.flowElements.push(element);
+    counter++;
 
-    element.$parent = process;
-  });
+    const element = elements.shift();
 
-  console.log('process', process);
+    console.log('element', element);
 
-  // handle connections
-  elements.forEach((elementJson) => {
-    if (elementJson.type === 'bpmn:SequenceFlow') {
-      const sequenceFlow = process.flowElements.find(({ id }) => id === elementJson.id);
+    if ([
+      'activity',
+      'boundaryEvent',
+      'event',
+      'gateway'
+    ].includes(element.zodType)) {
+      const parent = elementsById[ element.parent ];
 
-      if (!sequenceFlow) {
-        console.error('sequence flow not found', elementJson);
+      if (!parent) {
+        console.log('parent', element.parent, 'not found, continuing');
 
-        throw new Error();
+        elements.push(element);
+
+        continue;
       }
 
-      const source = process.flowElements.find(
-        (flowElement) => flowElement.id === elementJson.source
-      );
+      let host;
 
-      const target = process.flowElements.find(
-        (flowElement) => flowElement.id === elementJson.target
-      );
+      if (element.zodType === 'boundaryEvent') {
+        host = elementsById[ element.attachedToRef ];
+
+        if (!host) {
+          console.log('host', element.attachedToRef, 'not found, continuing');
+
+          elements.push(element);
+
+          continue;
+        }
+      }
+
+      const properties = {
+        id: element.id,
+        name: element.name
+      };
+
+      const moddleElement = createModdleElement(element.type, properties);
+
+      if (element.zodType === 'event' && element.eventDefinitionType) {
+        const eventDefinition = createModdleElement(element.eventDefinitionType);
+
+        moddleElement.set('eventDefinitions', [ eventDefinition ]);
+
+        eventDefinition.$parent = moddleElement;
+      }
+
+      elementsById[ element.id ] = moddleElement;
+
+      parent.flowElements.push(moddleElement);
+
+      moddleElement.$parent = parent;
+
+      if (host) {
+        moddleElement.attachedToRef = host;
+
+        if (!host.attachers) {
+          host.attachers = [];
+        }
+
+        host.attachers.push(moddleElement);
+      }
+    } else if (element.zodType === 'connection') {
+      const source = elementsById[ element.source ],
+            target = elementsById[ element.target ];
 
       if (!source || !target) {
-        console.error('source or target not found for sequence flow', elementJson);
+        !source && console.log('source', element.source, 'not found, continuing');
+        !target && console.log('target', element.target, 'not found, continuing');
 
-        throw new Error();
+        elements.push(element);
+
+        continue;
       }
 
-      sequenceFlow.sourceRef = source;
-      sequenceFlow.targetRef = target;
+      const moddleElement = createModdleElement('bpmn:SequenceFlow', {
+        id: element.id,
+        name: element.name,
+        sourceRef: source,
+        targetRef: target
+      });
 
-      source.outgoing = [ ...(source.outgoing || []), sequenceFlow ];
-      target.incoming = [ ...(target.incoming || []), sequenceFlow ];
-    }
-  });
-
-  // handle attachers
-  elements.forEach((elementJson) => {
-    if (elementJson.type === 'bpmn:BoundaryEvent') {
-      const boundaryEvent = process.flowElements.find(({ id }) => id === elementJson.id);
-
-      const host = process.flowElements.find(
-        (flowElement) => flowElement.id === elementJson.attachedToRef
-      );
-
-      if (!host) {
-        throw new Error('attachedToRef not found for boundary event', boundaryEvent.id);
+      if (!source.outgoing) {
+        source.outgoing = [];
       }
 
-      boundaryEvent.attachedToRef = host;
+      source.outgoing.push(moddleElement);
+
+      if (!target.incoming) {
+        target.incoming = [];
+      }
+
+      target.incoming.push(moddleElement);
+
+      const parent = source.$parent;
+
+      parent.flowElements.push(moddleElement);
+
+      moddleElement.$parent = parent;
     }
-  });
+  }
+
+  if (counter === 1000) {
+    throw new Error('Hit counter limit');
+  }
 
   const { xml } = await moddle.toXML(definitions);
 

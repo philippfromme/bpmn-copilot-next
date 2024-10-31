@@ -26,7 +26,7 @@ import classnames from 'classnames';
 import Copilot from './Copilot';
 
 const EXAMPLE_PROMPTS = [
-  'Create an error handling process',
+  'Create a hiring process for an insurance company',
   'Change the process to update the CMS record manually',
   'Require a manager approval before granting access to the platform',
   'Explain what a subprocess is',
@@ -113,7 +113,7 @@ function ChatComponent({ copilot, bpmnjs }) {
     isPromptingRef.current = false;
 
     setLoadingMessage(null);
-    
+
     setIsPrompting(false);
   }, [ addMessage, value ]);
 
