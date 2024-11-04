@@ -151,13 +151,9 @@ body {
 
         * {
           font-size: 14px !important;
-        }
-
-        p, li, ul, ol {
-          margin-bottom: 6px;
-
-          &:last-child {
-            margin-bottom: 0;
+          
+          &:not(.chatbot-message-loading) {
+            line-height: 1.25 !important;
           }
         }
 
